@@ -16,6 +16,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import "./style.css";
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
+import Login from "./components/login/login";
 
 function App() {
   const [load, upadateLoad] = useState(true);
@@ -32,16 +33,44 @@ function App() {
     <Router>
       <Preloader load={load} />
       <div className="App" id={load ? "no-scroll" : "scroll"}>
-        <Navbar />
-        <ScrollToTop />
         <Routes>
-          <Route path="/" element={<Home />} />
+          {/* Routes avec Navbar */}
+          <Route
+            path="/"
+            element={
+              <>
+                <Navbar />
+                <ScrollToTop />
+                <Home />
+              </>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <>
+                <Navbar />
+                <ScrollToTop />
+                <About />
+              </>
+            }
+          />
+          <Route
+            path="/resume"
+            element={
+              <>
+                <Navbar />
+                <ScrollToTop />
+                <Resume />
+              </>
+            }
+          />
+          {/* Route sans Navbar */}
+          <Route path="/login" element={<Login />} />
           <Route path="/project" element={<Projects />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/resume" element={<Resume />} />
-          <Route path="*" element={<Navigate to="/"/>} />
+          {/* Redirection vers la page d'accueil pour les routes non définies */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-        <Footer />
       </div>
     </Router>
   );
