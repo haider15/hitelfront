@@ -1,58 +1,112 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
-import { CgWebsite } from "react-icons/cg";
-import { BsGithub } from "react-icons/bs";
+import Modal from "react-bootstrap/Modal";
+import Form from "react-bootstrap/Form";
+import axios from "axios";
 
-function ProjectCards(props) {
-  const [products, setProducts] = useState([]);
+function ProjectCards({ products, activities }) {
+  const [showModal, setShowModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [reservationFormData, setReservationFormData] = useState({
+    user_id: "",
+    product_id: "",
+    date_debut: "",
+    date_fin: ""
+  });
+  const [reservationError, setReservationError] = useState(null);
 
-  useEffect(() => {
-    // Effectuez une requête GET pour récupérer les données des produits depuis votre backend
-    axios.get("http://localhost:8000/api/products")
-      .then(response => {
-        // Mettez à jour l'état local avec les données des produits
-        setProducts(response.data);
-      })
-      .catch(error => {
-        console.error("Error fetching products:", error);
-      });
-  }, []); // La dépendance vide [] signifie que cet effet ne s'exécutera qu'une seule fois après le montage du composant
+  const handleCardClick = (product) => {
+    setSelectedProduct(product);
+    setShowModal(true);
+    setReservationFormData({
+      ...reservationFormData,
+      product_id: product.id
+    });
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedProduct(null);
+    setReservationFormData({
+      user_id: "",
+      product_id: "",
+      date_debut: "",
+      date_fin: ""
+    });
+    setReservationError(null);
+  };
+
+  const handleReservationFormChange = (e) => {
+    setReservationFormData({ ...reservationFormData, [e.target.name]: e.target.value });
+  };
+
+  const handleReservationSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post("http://localhost:8000/api/reservations", reservationFormData);
+      handleCloseModal();
+    } catch (error) {
+      setReservationError(error.message);
+    }
+  };
+
+  // Fonction pour diviser les produits en groupes de trois
+  function chunkArray(arr, size) {
+    const chunkedArr = [];
+    for (let i = 0; i < arr.length; i += size) {
+      chunkedArr.push(arr.slice(i, i + size));
+    }
+    return chunkedArr;
+  }
+
+  const chunkedProducts = chunkArray(products, 3);
 
   return (
-    <div className="product-list">
-      {products.map(product => (
-        <Card className="project-card-view" key={product.id}>
-          <Card.Img variant="top" src={product.imgPath} alt="card-img" />
-          <Card.Body>
-            <Card.Title>{product.name}</Card.Title>
-            <Card.Text style={{ textAlign: "justify" }}>
-              {product.adresse}
-            </Card.Text>
-            {/* <Button variant="primary" href={product.ghLink} target="_blank">
-              <BsGithub /> &nbsp;
-              {product.isBlog ? "Blog" : "GitHub"}
-            </Button> */}
-            {"\n"}
-            {"\n"}
-
-            {/* If the component contains Demo link and if it's not a Blog then, it will render the below component  */}
-
-            {!product.isBlog && product.demoLink && (
-              <Button
-                variant="primary"
-                href={product.activity_id}
-                target="_blank"
-                style={{ marginLeft: "10px" }}
-              >
-                <CgWebsite /> &nbsp;
-                {"Demo"}
-              </Button>
-            )}
-          </Card.Body>
-        </Card>
+    <div>
+      {chunkedProducts.map((chunk, index) => (
+        <div key={index} className="d-flex justify-content-between mb-4">
+          {chunk.map((product) => (
+            <Card key={product.id} className="project-card-view" style={{ width: "30%", margin: "10px" }} onClick={() => handleCardClick(product)}>
+              <Card.Img variant="top" src={product.image} alt="card-img" />
+              <Card.Body>
+                <Card.Title>{product.name}</Card.Title>
+                <Card.Text>{product.adresse}</Card.Text>
+              </Card.Body>
+            </Card>
+          ))}
+        </div>
       ))}
+
+      <Modal show={showModal} onHide={handleCloseModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Ajouter une réservation pour {selectedProduct && selectedProduct.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {reservationError && <p style={{ color: "red" }}>{reservationError}</p>}
+          <Form onSubmit={handleReservationSubmit}>
+            <Form.Group controlId="formReservationUserID">
+              <Form.Label>User ID</Form.Label>
+              <Form.Control type="text" name="user_id" value={reservationFormData.user_id} onChange={handleReservationFormChange} required />
+            </Form.Group>
+            <Form.Group controlId="formReservationProductID">
+              <Form.Label>Product ID</Form.Label>
+              <Form.Control type="text" name="product_id" value={reservationFormData.product_id} onChange={handleReservationFormChange} disabled required />
+            </Form.Group>
+            <Form.Group controlId="formReservationDateDebut">
+              <Form.Label>Date de début</Form.Label>
+              <Form.Control type="date" name="date_debut" value={reservationFormData.date_debut} onChange={handleReservationFormChange}  min={new Date().toISOString().slice(0, 10)}required />
+            </Form.Group>
+            <Form.Group controlId="formReservationDateFin">
+              <Form.Label>Date de fin</Form.Label>
+              <Form.Control type="date" name="date_fin" value={reservationFormData.date_fin} onChange={handleReservationFormChange} min={reservationFormData.date_debut ? new Date(new Date(reservationFormData.date_debut).getTime() + 86400000).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)} required />
+            </Form.Group>
+            <Button variant="primary" type="submit">
+              Ajouter réservation
+            </Button>
+          </Form>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }

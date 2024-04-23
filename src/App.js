@@ -17,6 +17,7 @@ import "./style.css";
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Login from "./components/login/login";
+import Blog from "./components/blog/blog";
 
 function App() {
   const [load, upadateLoad] = useState(true);
@@ -36,12 +37,22 @@ function App() {
         <Routes>
           {/* Routes avec Navbar */}
           <Route
-            path="/"
+            path="/Home"
             element={
               <>
                 <Navbar />
                 <ScrollToTop />
                 <Home />
+              </>
+            }
+          />
+          <Route
+            path="/blog"
+            element={
+              <>
+                <Navbar />
+                <ScrollToTop />
+                <Blog />
               </>
             }
           />
@@ -66,7 +77,7 @@ function App() {
             }
           />
           {/* Route sans Navbar */}
-          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Login />} />
           <Route path="/project" element={<Projects />} />
           {/* Redirection vers la page d'accueil pour les routes non définies */}
           <Route path="*" element={<Navigate to="/" />} />
